@@ -1,0 +1,237 @@
+Script started on Wed Apr 24 14:53:11 2019
+[?1034hbash-3.2$ cat contact.h
+#ifndef CONTACT_H
+#define CONTACT_H
+
+// Batyr Kornusov Homework assignment 3
+// This file contains the Contact class with function definitions
+// Last updated: 04/09/2019
+// Program works when compiled through qt creator
+// Does not compile using qmake on console
+
+#include <QTextStream>
+#include <QString>
+
+class Contact {
+private:
+   QString firstName;
+   QString lastName;
+public:
+   int category;
+   QString streetAddress;
+   QString zipCode;
+   QString city;
+   QString phoneNumber;
+   Contact() {
+       firstName = "Name";
+       lastName = "Surname";
+       streetAddress = "address";
+       zipCode = "00000";
+       city = "city";
+       phoneNumber = "000";
+   }
+   Contact(int cat,
+           QString name,
+           QString last,
+           QString address,
+           QString zip,
+           QString c,
+           QString number)
+   {
+       category = cat;
+       firstName = name;
+       lastName = last;
+       streetAddress = address;
+       zipCode = zip;
+       city = c;
+       phoneNumber = number;
+   }
+   QString toString() {
+       QString cat = QString::number(category);
+       QString separator = "-------------------------------------------\n";
+       QString returnString = QString("Category: %1\n"
+                           "Name: %2 %3\n"
+                           "Address: %4, %5, %6\n"
+                           "Phone: %7 \n").arg(cat,
+                                           firstName, lastName,
+                                           streetAddress, zipCode, city,
+                                           phoneNumber);
+       return separator + returnString;
+   }
+};
+
+#endif // CONTACT_H
+
+bash-3.2$ cat contactlist.h
+#ifndef CONTACTLIST_H
+#define CONTACTLIST_H
+
+// This file contains the contactlist class and its functions declarations
+// Last updated: 04/09/2019
+
+#include "contact.h"
+
+class ContactList {
+public:
+    QList<Contact> cList;
+    ContactList() {
+        srand(time(nullptr));
+    }
+    void add(Contact c);
+    void remove(Contact c);
+    QStringList getPhoneList(int category);
+    QStringList getMailingList(int category);
+};
+
+#endif // CONTACTLIST_H
+bash-3.2$ cat contactfactory.h
+#ifndef CONTACTFACTORY_H
+#define CONTACTFACTORY_H
+
+// This file contains the contactfactory class and its functions
+// Last updated: 04/09/2019
+
+#include "contactlist.h"
+
+static QStringList nameList = {"John", "Luke","Alec","Avery","Shane",
+                               "Adam","Griffin","Joseph","Amilcar","Tyler",
+                               "Anna","Susan","Mary","Linda","Maria",
+                               "Vladimir"};
+static QStringList lastNameList = {"Smith","Johnson","Walters",
+                                   "Rogers","Stewart","Stark",
+                                    "Black","Joestar","Rivera",
+                                   "Wilson","Kornusov","Putin"};
+static QStringList cityList = {"New York","Boston","Los Angeles",
+                               "Moscow","Istanbul","Tokyo",
+                                "Bejing","Seekonk","Natick",
+                               "Cairo","Morioh","Elista"};
+static QStringList addressList = {"Commonwealth Ave.","Park St.",
+                                  "Pioneer St.","Washington St.",
+                                    "New St.","Somename St.",
+                                        "Random St."};
+
+class contactFactory {
+
+public:
+    contactFactory() {
+    }
+    int randint(int Min, int Max) {
+        return std::rand() % (Max + 1 - Min) + Min;
+    }
+    long randlong(long Min, long Max) {
+        return std::rand() % (Max + 1 - Min) + Min;
+    }
+
+    Contact createNew() {
+        int category = randint(0,5);
+        QString name = nameList[randint(0,14)];
+        QString last = lastNameList[randint(0,11)];
+        QString address = addressList[randint(0,6)];
+        QString zip = QString::number(randint(10000,9999999));
+        QString city = cityList[randint(0,11)];
+        QString phone = QString::number(randlong(1000000000,9999999999));
+
+        return Contact(category,name,last,address,zip,city,phone);
+    }
+};
+
+#endif // CONTACTFACTORY_H
+bash-3.2$ cat contactlist.cpp
+
+// This file contains function definitions for Contact and ContactList classes
+// Last updated: 04/09/2019
+
+#include "contactlist.h"
+
+void ContactList::add(Contact c) {
+    cList.append(c);
+}
+void ContactList::remove(Contact c) {
+    int i = 0;
+    while (QString::compare(cList[i].toString(), c.toString(),
+                            Qt::CaseSensitive) != 0)
+        i++;
+        if (QString::compare(cList[i].toString(), c.toString(),
+                             Qt::CaseSensitive) == 0) {
+            cList.removeAt(i);
+        }
+}
+QStringList ContactList::getPhoneList(int category) {
+    QStringList phoneList;
+    for (Contact a : cList) {
+        if (a.category == category) {
+            phoneList.append(a.phoneNumber+"\t");
+        }
+    }
+    phoneList.prepend("Phone List: ");
+    phoneList.prepend("-------------------------------------------\n");
+    phoneList.append("\n");
+    return phoneList;
+}
+QStringList ContactList::getMailingList(int category) {
+    QStringList mailingList;
+    for (Contact a : cList) {
+        if (a.category == category) {
+            mailingList.append(a.streetAddress + ", " +
+                               a.zipCode + ", " +
+                               a.city + "\t");
+        }
+    }
+    mailingList.prepend("Mail List: ");
+    mailingList.prepend("-------------------------------------------\n");
+    mailingList.append("\n");
+    return mailingList;
+}
+bash-3.2$ cat main.cpp
+
+// This file contains client code
+// Last updated: 04/09/2019
+
+#include "contactfactory.h"
+#include "contactlist.h"
+
+static QTextStream cout(stdout);
+
+int main() {
+    ContactList contList;
+    Contact a(1,"Batyr","Kornusov","MySt.","3441","Boston","8902444506203");
+    cout << a.toString();
+    contList.add(a);
+    //create ten random contacts
+    for (int i = 0; i < 10; i++) {
+        contList.add(contactFactory().createNew());
+    }
+    cout << contList.cList[1].toString();
+    QString phoneList = contList.getPhoneList(4).join("");
+    QString mailList = contList.getMailingList(4).join("");
+    cout << phoneList;
+    cout << mailList;
+    //remove the first contact we added
+    //now the 0th contact should be the first random generated one
+    contList.remove(a);
+    cout << contList.cList[0].toString();
+    return 0;
+}
+bash-3.2$ cat hw3.pro
+TEMPLATE = app
+CONFIG += console c++11
+CONFIG -= app_bundle
+QT += core
+QT += widgets
+QMAKE_MAC_SDK += macosx
+CONFIG += pullout
+
+INCLUDEPATH += usr/lib/TrollTech/Qt-5.12.2/bin:$PATH
+
+SOURCES += \
+        main.cpp \
+    contactlist.cpp
+
+HEADERS += \
+    contactlist.h \
+    contact.h \
+    contactfactory.h
+bash-3.2$ exit
+exit
+
+Script done on Wed Apr 24 14:54:20 2019
